@@ -1,0 +1,136 @@
+---
+title: "Outlier Checking Site A1, A2 and A3"
+author: "Nur Rohadatul Aisy"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load, message=FALSE}
+library(tidyverse)
+library(shiny)
+library(imputeTS)
+library(ggpubr)
+library(zoo)
+library(knitr)
+
+Site_A <- read.csv("D:/Outlier_checking/Outlier_checking_site_A.csv")
+```
+
+### Overview of Site A datasets 
+```{r data}
+head(Site_A)
+glimpse(Site_A)
+```
+
+### Checking the total number of missing values for each columns
+```{r Missing-Values}
+colSums(is.na(Site_A))
+```
+
+## Imputation with `ImputeTS`
+A packages with imputation functions, missing data visualizations, stat and datasets.
+
+### The distribution of missing data
+```{r Missing-Data-Plots, echo=FALSE, fig.show='hold', out.width='30%'}
+ggplot_na_distribution(Site_A$Var.1)
+ggplot_na_distribution(Site_A$Var.2)
+ggplot_na_distribution(Site_A$Var.3)
+```
+
+### Imputation by Linear Interpolation
+```{r Spline-Interpolation}
+Site_A_imp <- Site_A %>%
+  na_interpolation(option="linear")
+```
+
+```{r imputation-plot, echo=FALSE, fig.show='hold', out.width='50%' }
+ggplot_na_imputations(Site_A$Var.1, Site_A_imp$Var.1)
+ggplot_na_imputations(Site_A$Var.2, Site_A_imp$Var.2)
+ggplot_na_imputations(Site_A$Var.3, Site_A_imp$Var.3)
+```
+
+### Checking Outlier for Site A
+```{r Boxplot, echo=FALSE, fig.show='hold', out.width='30%'}
+Site_A_imp$Site=as.factor(Site_A_imp$Site)
+
+ggplot(Site_A_imp, aes(x=Site, y=Var.1)) + geom_boxplot()
+ggplot(Site_A_imp, aes(x=Site, y=Var.2)) + geom_boxplot()
+ggplot(Site_A_imp, aes(x=Site, y=Var.3)) + geom_boxplot()
+```
+
+### Filtering Outliers
+```{r remove-outliers, fig.show='hold', out.width='30%'}
+Site_A_imp <- Site_A_imp %>%
+  mutate(is_outlier1 = Var.1 > 1000, 
+         is_outlier2 = Var.2 > 10000, 
+         is_outlier3 = Var.3 > 1000) %>%
+  filter(!is_outlier1, !is_outlier2, !is_outlier3)
+```
+
+### Site A Annual Summary
+```{r annual-mean, message = FALSE}
+Annual_Mean <- Site_A_imp %>% 
+  group_by(Site, Year) %>%
+  summarize(annual_mean_Var.1 = mean(Var.1), 
+            annual_mean_Var.2 = mean(Var.2), 
+            annual_mean_Var.3 = mean(Var.3)) %>%
+  arrange(Site)
+```
+
+### Site A1 Annual Mean
+```{r display-site1, echo=FALSE}
+Annual_Mean %>%
+  filter(Site==1) %>%
+  kable()
+```
+
+### Site A2 Annual Mean
+```{r display-site2, echo=FALSE}
+Annual_Mean %>%
+  filter(Site==2) %>%
+  kable()
+```
+
+### Site A3 Annual Mean
+```{r display-site3, echo=FALSE}
+Annual_Mean %>%
+  filter(Site==3) %>%
+  kable()
+```
+
+## Data Visualization
+### Graph of annual mean of Var.1 against time
+```{r plot-Var.1, echo=FALSE, fig.align='center'}
+ggplot(Annual_Mean, aes(x=Year, y=annual_mean_Var.1, color=Site)) +
+  geom_line() + 
+  labs(
+    title = "Annual Mean Var.1 for Site A",
+    x = "Year",
+    y = "Var.1")
+```
+
+### Graph of annual mean of Var.2 against time
+```{r plot-Var.2, echo=FALSE, fig.align='center'}
+ggplot(Annual_Mean, aes(x=Year, y=annual_mean_Var.2, color=Site)) + 
+  geom_line() +
+  labs(
+    title = "Annual Mean Var.2 for Site A",
+    x = "Year",
+    y = "Var.2")
+```
+
+### Graph of annual mean of Var.3 against time
+```{r plot-Var.3, echo=FALSE, fig.align='center'}
+ggplot(Annual_Mean, aes(x=Year, y=annual_mean_Var.3, color=Site)) + 
+  geom_line() +
+  labs(
+    title = "Annual Mean Var.3 for Site A",
+    x = "Year",
+    y = "Var.3")
+```
