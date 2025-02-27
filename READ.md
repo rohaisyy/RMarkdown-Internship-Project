@@ -5,7 +5,7 @@ The primary goal was to perform exploratory data analysis (EDA) with focus on id
 ## Files  
 - `Site_A_overall.Rmd` – The main RMarkdown file.  
 - `Site_A_overall.html` – The rendered output.  
-- `Outlier_checking_site_A.csv` – The dataset used (if any).  
+- `Outlier_checking_site_A.csv` – The dataset used.  
 
 ## How to View the Report  
 Open `Site_A_overall.html` in a browser to see the results.  
